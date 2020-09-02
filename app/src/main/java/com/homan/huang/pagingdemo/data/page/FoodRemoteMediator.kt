@@ -7,8 +7,10 @@ import androidx.paging.RemoteMediator
 import com.homan.huang.pagingdemo.network.FoodService
 import com.homan.huang.pagingdemo.data.dao.FoodDao
 import com.homan.huang.pagingdemo.data.dao.PageKeyDao
+import com.homan.huang.pagingdemo.data.dao.SettingDao
 import com.homan.huang.pagingdemo.data.entity.Food
-import com.homan.huang.stockrestapi.dagger.qualifier.DatabaseTypeEnum
+import com.homan.huang.pagingdemo.setting.PageSetting
+import com.homan.huang.stockrestapi.dagger.qualifier.DatabaseTypeEnum.*
 import com.homan.huang.stockrestapi.dagger.qualifier.FoodDB
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -16,11 +18,13 @@ import javax.inject.Singleton
 @ExperimentalPagingApi
 @Singleton
 class FoodRemoteMediator @Inject constructor(
-    @FoodDB(DatabaseTypeEnum.DAO)
+    @FoodDB(DAO)
     private val foodDao: FoodDao,
-    @FoodDB(DatabaseTypeEnum.DAO2)
+    @FoodDB(DAO2)
     private val keyDao: PageKeyDao,
-    @FoodDB(DatabaseTypeEnum.BACKEND)
+    @FoodDB(DAO3)
+    private val settingDao: SettingDao,
+    @FoodDB(BACKEND)
     private val foodService: FoodService
 ) : RemoteMediator<Int, Food>() {
 
@@ -29,11 +33,6 @@ class FoodRemoteMediator @Inject constructor(
         loadType: LoadType,
         state: PagingState<Int, Food>
     ): MediatorResult {
-
-
-
-
-
 
         val page = when (loadType) {
             // for 1st page
@@ -53,13 +52,14 @@ class FoodRemoteMediator @Inject constructor(
             keyDao.clearPageKeys()
 
             // get data from backend
-            val fooddata = foodService.getFoods()
+            val foodList = foodService.getFoods()
 
+            // save data to food table
+            foodDao.insertAllFood(foodList)
 
-
-
-
-
+            // split to pages
+            val totalCount = foodList.size
+            val rowPerPage = PageSetting().ROWS_PAGE
 
             return MediatorResult.Success(
                 endOfPaginationReached = atEndofPage)

@@ -4,6 +4,7 @@ import android.content.Context
 import com.homan.huang.pagingdemo.network.FoodService
 import com.homan.huang.pagingdemo.data.dao.FoodDao
 import com.homan.huang.pagingdemo.data.dao.PageKeyDao
+import com.homan.huang.pagingdemo.data.dao.SettingDao
 import com.homan.huang.pagingdemo.data.room.FoodDatabase
 import com.homan.huang.pagingdemo.data.room.FoodRepository
 import com.homan.huang.stockrestapi.dagger.qualifier.FoodDB
@@ -26,16 +27,22 @@ class FoodDBModule {
             FoodDatabase = FoodDatabase.getDatabase(context)
 
     @Provides @FoodDB(DAO)
-    fun provideStoryDao(
+    fun provideFoodDao(
         @FoodDB(DATABASE) database: FoodDatabase
     ):
             FoodDao = database.foodDao
 
     @Provides @FoodDB(DAO2)
-    fun provideStoryXDao(
+    fun provideKeyDao(
         @FoodDB(DATABASE) database: FoodDatabase
     ):
             PageKeyDao = database.keyDao
+
+    @Provides @FoodDB(DAO3)
+    fun provideSettingDao(
+        @FoodDB(DATABASE) database: FoodDatabase
+    ):
+            SettingDao = database.settingDao
 
     @Provides @FoodDB(BACKEND)
     fun provideFoodService(): FoodService = FoodService()

@@ -7,28 +7,30 @@ import androidx.paging.ExperimentalPagingApi
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.internal.runner.junit4.AndroidJUnit4ClassRunner
-import com.homan.huang.pagingdemo.data.room.FoodRepository
+import com.homan.huang.pagingdemo.data.dao.FoodDao
+import com.homan.huang.pagingdemo.data.dao.PageKeyDao
+import com.homan.huang.pagingdemo.data.dao.SettingDao
 import com.homan.huang.pagingdemo.network.FoodService
 import com.homan.huang.pagingdemo.data.room.FoodDatabase
 import junit.framework.Assert.assertEquals
 import kotlinx.coroutines.runBlocking
-import org.hamcrest.MatcherAssert.assertThat
-import org.hamcrest.Matchers.greaterThan
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4ClassRunner::class)
-class pageTest {
+class PageTest {
 
     @get:Rule
     val instantTaskExecutorRule = InstantTaskExecutorRule()
 
     private lateinit var context: Context
     private lateinit var mService: FoodService
-    private lateinit var mRepo: FoodRepository
     private lateinit var db: FoodDatabase
+    private lateinit var foodDao: FoodDao
+    private lateinit var keyDao: PageKeyDao
+    private lateinit var settingDao: SettingDao
 
     @Before
     fun setup() {
@@ -36,13 +38,16 @@ class pageTest {
 
         db = Room.inMemoryDatabaseBuilder(
             context, FoodDatabase::class.java)
-            // Allowing main thread queries, just for testing.
             .allowMainThreadQueries()
             .build()
 
+        // Dao
+        foodDao = db.foodDao
+        keyDao = db.keyDao
+        settingDao = db.settingDao
+
         // backend service
         mService = FoodService()
-        mRepo = FoodRepository(db)
     }
 
     @Test
@@ -52,6 +57,17 @@ class pageTest {
             val result = mService.getFoods()
             for (item in result) { lgd("$item") }
             assertEquals(result.size, mService.maxRange)
+        }
+    }
+
+    @Test
+    @Throws(Exception::class)
+    fun pageSettingTest() {
+        runBlocking {
+            val rowsPerPageSet = 10
+            settingDao.insertSetting(rowsPerPageSet)
+            val rowsPerPageLimit = settingDao.getPageSetting().rows_page
+            assertEquals(rowsPerPageSet, rowsPerPageLimit)
         }
     }
 

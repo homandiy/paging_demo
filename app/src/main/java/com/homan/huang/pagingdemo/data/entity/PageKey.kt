@@ -6,9 +6,11 @@ import androidx.room.PrimaryKey
 // page data wrapper
 @Entity (tableName = "pagekey")
 data class PageKey(
-    @PrimaryKey
     val foodId: Long,
     val prevKey: Int?,
     val nextKey: Int?,
-    var pageMax: Int?
-)
+    var maxPage: Int?
+) {
+    @PrimaryKey(autoGenerate = true)
+    var id: Long? = null
+}

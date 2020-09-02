@@ -10,7 +10,6 @@ import kotlin.collections.ArrayList
 // provide data
 class FoodService {
     val maxRange = 131
-    val PageLimit = 10
 
     // generate data
     suspend fun getFoods(): List<Food> {
