@@ -12,7 +12,7 @@ class FoodService {
     val maxRange = 131
 
     // generate data
-    suspend fun getFoods(): List<Food> {
+    suspend fun getFoods(startRow: Int, endRow: Int): List<Food> {
         lgd("Simulate delay network...")
         return withContext(Dispatchers.IO) {
             delay(2000)
@@ -26,9 +26,13 @@ class FoodService {
                 "s\'more", "potato chip", "milk shake"
             )
             val maxSize = foodType.size
-            for (id in 0 until maxRange) {
+
+            var mEndRow = endRow
+            if (endRow > maxRange) mEndRow = maxRange
+
+            for (id in startRow until mEndRow) {
                 val ranInt = (0 until maxSize).random()
-                val food = id.toString()+".  "+foodType[ranInt]
+                val food = foodType[ranInt]
                 data.add(Food(foodname = food))
             }
             data

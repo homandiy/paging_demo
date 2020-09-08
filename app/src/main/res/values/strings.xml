@@ -2,4 +2,5 @@
     <string name="app_name">Paging Demo</string>
     <string name="retry">Retry</string>
     <string name="no_more_end_of_list">No more! End of List.</string>
+    <string name="error">Error!</string>
 </resources>

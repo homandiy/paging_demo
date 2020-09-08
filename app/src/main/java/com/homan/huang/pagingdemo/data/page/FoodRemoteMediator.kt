@@ -6,24 +6,21 @@ import androidx.paging.PagingState
 import androidx.paging.RemoteMediator
 import com.homan.huang.pagingdemo.network.FoodService
 import com.homan.huang.pagingdemo.data.dao.FoodDao
-import com.homan.huang.pagingdemo.data.dao.PageKeyDao
-import com.homan.huang.pagingdemo.data.dao.SettingDao
 import com.homan.huang.pagingdemo.data.entity.Food
+import com.homan.huang.pagingdemo.data.entity.PageKey
+import com.homan.huang.pagingdemo.data.room.FoodDatabase
 import com.homan.huang.pagingdemo.setting.PageSetting
 import com.homan.huang.stockrestapi.dagger.qualifier.DatabaseTypeEnum.*
 import com.homan.huang.stockrestapi.dagger.qualifier.FoodDB
+import java.lang.Thread.sleep
 import javax.inject.Inject
 import javax.inject.Singleton
 
 @ExperimentalPagingApi
 @Singleton
 class FoodRemoteMediator @Inject constructor(
-    @FoodDB(DAO)
-    private val foodDao: FoodDao,
-    @FoodDB(DAO2)
-    private val keyDao: PageKeyDao,
-    @FoodDB(DAO3)
-    private val settingDao: SettingDao,
+    @FoodDB(DATABASE)
+    private val db: FoodDatabase,
     @FoodDB(BACKEND)
     private val foodService: FoodService
 ) : RemoteMediator<Int, Food>() {
@@ -35,31 +32,40 @@ class FoodRemoteMediator @Inject constructor(
     ): MediatorResult {
 
         val page = when (loadType) {
-            // for 1st page
+            // First time visit or Adapter.refresh()
+            // null: refresh every time to get data
             LoadType.REFRESH -> null
+            // More Data in the front
             LoadType.PREPEND -> {
                 return MediatorResult.Success(endOfPaginationReached = true)
             }
+            // More Data
             LoadType.APPEND -> {
             }
         }
 
         try {
-            val atEndofPage = false
+            val atEndofPage = true
+            val foodDao = db.foodDao
+            val keyDao = db.keyDao
+            val settingDao = db.settingDao
 
             // clear database
             foodDao.clearAllFood()
             keyDao.clearPageKeys()
 
-            // get data from backend
-            val foodList = foodService.getFoods()
+            // One time download
+            val foodList = foodService.getFoods(
+                0,
+                FoodService().maxRange
+            )
+
+            // Good request but no data
+            if (foodList.isEmpty())
+                return MediatorResult.Success(endOfPaginationReached = false)
 
             // save data to food table
             foodDao.insertAllFood(foodList)
-
-            // split to pages
-            val totalCount = foodList.size
-            val rowPerPage = PageSetting().ROWS_PAGE
 
             return MediatorResult.Success(
                 endOfPaginationReached = atEndofPage)
@@ -68,4 +74,5 @@ class FoodRemoteMediator @Inject constructor(
             return MediatorResult.Error(exception)
         }
     }
+
 }

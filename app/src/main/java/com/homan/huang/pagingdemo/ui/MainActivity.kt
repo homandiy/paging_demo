@@ -14,28 +14,74 @@
  * limitations under the License.
  */
 
-package com.example.android.codelabs.paging.ui
+package com.homan.huang.pagingdemo.ui
 
 import android.os.Bundle
-import android.util.Log
-import android.view.KeyEvent
-import android.view.View
-import android.view.inputmethod.EditorInfo
-import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.databinding.DataBindingUtil
 import androidx.lifecycle.Observer
-import androidx.recyclerview.widget.DividerItemDecoration
+import com.example.android.codelabs.paging.ui.MainViewModel
 import com.homan.huang.pagingdemo.R
+import com.homan.huang.pagingdemo.databinding.ActivityMainBinding
 import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
+import androidx.activity.viewModels
+import androidx.lifecycle.lifecycleScope
+import androidx.paging.LoadState
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+import kotlinx.android.synthetic.main.activity_main.*
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
 
-    private lateinit var viewModel: MainViewModel
+    private val mainViewModel: MainViewModel by viewModels()
+    private lateinit var mBinding: ActivityMainBinding
+    private val foodAdapter by lazy { FoodAdapter() }
+    private lateinit var food_rv: RecyclerView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
+        // data binding:
+        mBinding = DataBindingUtil.setContentView(this, R.layout.activity_main)
+
+        food_rv = findViewById(R.id.food_rv)
+
+        // RecyclerView manager
+        food_rv.layoutManager = LinearLayoutManager(this)
+
+        // adapter
+        mBinding.apply {
+            food_rv.adapter = foodAdapter.withLoadStateFooter(
+                FoodFooterAdapter { foodAdapter.retry() })
+            mainViewModel = mainViewModel
+            lifecycleOwner = this@MainActivity
+        }
+
+        lifecycleScope.launch {
+            // observer
+            mainViewModel.postToAdapter().observe(
+                    this@MainActivity,
+                    {
+                        // update adapter
+                        foodAdapter.submitData(lifecycle, it)
+                        swiperRefresh.isEnabled = false
+                    }
+            )
+        }
+
+        lifecycleScope.launch {
+            foodAdapter.loadStateFlow
+                    .collectLatest {
+                    state ->
+                swiperRefresh.isRefreshing =
+                    state.refresh is LoadState.Loading
+            }
+
+
+        }
 
     }
 

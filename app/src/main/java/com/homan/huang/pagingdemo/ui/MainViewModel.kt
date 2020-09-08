@@ -17,26 +17,31 @@
 package com.example.android.codelabs.paging.ui
 
 import androidx.hilt.lifecycle.ViewModelInject
+import androidx.lifecycle.LiveData
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.asLiveData
+import androidx.lifecycle.viewModelScope
+import androidx.paging.PagingData
+import androidx.paging.cachedIn
+import com.homan.huang.pagingdemo.data.entity.Food
 import com.homan.huang.pagingdemo.data.room.FoodRepository
+import com.homan.huang.stockrestapi.dagger.qualifier.DatabaseTypeEnum
+import com.homan.huang.stockrestapi.dagger.qualifier.FoodDB
+import kotlinx.coroutines.launch
 
 /**
  * ViewModel for the [MainActivity] screen.
  * The ViewModel works with the [GithubRepository] to get the data.
  */
 class MainViewModel @ViewModelInject constructor(
+    @FoodDB(DatabaseTypeEnum.REPOSITORY)
     private val foodRepo: FoodRepository
 ) : ViewModel()  {
 
-
-
-    // flow is observable vs LiveData
-
-
-
-    companion object {
-        private const val VISIBLE_THRESHOLD = 5
-    }
+    // LiveData to PagingDataAdapter
+    // Cache the data so it won't be lost in transition.
+    suspend fun postToAdapter(): LiveData<PagingData<Food>> =
+        foodRepo.fetchFoodList().cachedIn(viewModelScope).asLiveData()
 
 
 }

@@ -19,38 +19,30 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 @Module
 @InstallIn(ApplicationComponent::class)
 class FoodDBModule {
-
     @Provides @FoodDB(DATABASE)
-    fun provideFoodDatabase(
-        @ApplicationContext context: Context
-    ):
-            FoodDatabase = FoodDatabase.getDatabase(context)
+    fun provideFoodDatabase(@ApplicationContext context: Context
+    ): FoodDatabase = FoodDatabase.getDatabase(context)
 
     @Provides @FoodDB(DAO)
-    fun provideFoodDao(
-        @FoodDB(DATABASE) database: FoodDatabase
-    ):
-            FoodDao = database.foodDao
+    fun provideFoodDao(@FoodDB(DATABASE) database: FoodDatabase
+    ): FoodDao = database.foodDao
 
     @Provides @FoodDB(DAO2)
-    fun provideKeyDao(
-        @FoodDB(DATABASE) database: FoodDatabase
-    ):
-            PageKeyDao = database.keyDao
+    fun provideKeyDao(@FoodDB(DATABASE) database: FoodDatabase
+    ): PageKeyDao = database.keyDao
 
     @Provides @FoodDB(DAO3)
-    fun provideSettingDao(
-        @FoodDB(DATABASE) database: FoodDatabase
-    ):
-            SettingDao = database.settingDao
+    fun provideSettingDao(@FoodDB(DATABASE) database: FoodDatabase
+    ): SettingDao = database.settingDao
 
     @Provides @FoodDB(BACKEND)
     fun provideFoodService(): FoodService = FoodService()
 
     @Provides @FoodDB(REPOSITORY)
     fun provideFoodRepository(
-        @FoodDB(DATABASE) db: FoodDatabase
-    ):
-            FoodRepository = FoodRepository(db)
+            @FoodDB(DATABASE) db: FoodDatabase,
+            @FoodDB(BACKEND) service: FoodService
+    ): FoodRepository = FoodRepository(db, service)
+
 
 }
